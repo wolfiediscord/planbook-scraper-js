@@ -1,0 +1,15 @@
+{
+  "name": "planbook-scraper",
+  "version": "1.0.0",
+  "description": "Scrapes the planbook page for NST class.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "wolfiediscord",
+  "license": "MIT",
+  "dependencies": {
+    "feed": "^4.2.2",
+    "request-promise-native": "^1.0.9"
+  }
+}
