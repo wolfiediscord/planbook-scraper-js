@@ -32,7 +32,7 @@ You need to split the URL. Cut everything in between `monday=` and `&_=`. Take t
 `feed.instructor.link` - This value contains a link to the Instructor's website. Make sure this is a public website, as this will be displayed on the feed.
 
 # Running This Script
-Running this script is easy. Make sure you have installed the node modules using the `npm install` command.
+Running this script is easy. Make sure you have installed the node modules using the `npm install` command. Make sure you have also installed the `feed` module from THIS repository. The `feed` module is modified for this script to work.
 ```
 node index.js
 ```
