@@ -1,0 +1,21 @@
+{
+	"planbookURL": ["", "", ""],
+	"websiteURL": "",
+	"outputFile": "",
+	"type": "",
+	"feed": {
+		"title": "",
+		"instructor": {
+			"name": "",
+			"email": "",
+			"link": ""
+		}
+	},
+	"notes": {
+		"monday": "",
+		"tuesday": "",
+		"wednesday": "",
+		"thursday": "",
+		"friday": ""
+	}
+}

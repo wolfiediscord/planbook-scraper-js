@@ -2,38 +2,23 @@
 // Made by Wolfie
 // wolf1e.ga
 
-const rp = require('request-promise-native');
+const fetch = require('axios');
 const fs = require('fs');
 const feed = require('feed').Feed;
-// you will need to set this before running
-// planbookURL - Get this by going to your Planbook.com page, Inspect Element > Network, click XHR, then Reload the page. Find the one that has launchStudent in the URL.
-// Then you need to split the URL in half after "monday=". Then cutout the rest until "&_=". Put the rest of the URL starting with "&_=" in the second string in the array
-// For the third string in the array, put the regular Planbook.com link that you would use to access Planbook
-// websiteURL - This is the url of the website you are going to host the rss feed on. It NEEDS to contain the https:// or http:// part and a / at the end.
-// outputFile - This is the name and file extension of the RSS feed. Make sure this file exists as a blank file with the same name and extension, so the script can delete it!
-// type - This can either be "rss2" or "atom". Recommended option is atom.
-// feed - This is the options for the RSS Feed
-// title - This is the title of the RSS Feed
-// instructor - This is the instructor's contact information
-// name - The name of the instructor
-// email - The email of the instructor
-// link - The link to the instructor's website/school page/whatever you want
-const config = {
-	planbookURL: ["", "", ""],
-	websiteURL: "",
-	outputFile: "",
-	type: "",
-	feed: {
-		title: "",
-		instructor: {
-			name: "",
-			email: "",
-			link: ""
-		},
+const config = require('./config.json');
 
-	}
-};
-
+// logo
+console.log(`██████  ██████      ████████  ██████      ██████  ███████ ███████            ██ ███████ 
+██   ██ ██   ██        ██    ██    ██     ██   ██ ██      ██                 ██ ██      
+██████  ██████         ██    ██    ██     ██████  ███████ ███████            ██ ███████ 
+██      ██   ██        ██    ██    ██     ██   ██      ██      ██       ██   ██      ██ 
+██      ██████         ██     ██████      ██   ██ ███████ ███████     ██ █████  ███████ 
+                                                                                        `);
+console.log(`Made by Wolfie
+wolf1e.ga
+Version: ${require('./package.json').version}
+---------------------------------------------------`);
+                                                                                                                       
 // checks configuration for missing fields
 function checkConfig() {
 	if(config.planbookURL[0].length === 0 || config.planbookURL[1].length === 0 || config.planbookURL[2].length === 0) {
@@ -74,10 +59,12 @@ async function createFeed() {
 	let day = new Date; day = day.getDate();
 	let year = new Date; year = year.getFullYear();
 	// request the data from the api
-	const results = await rp({
+	const results = await fetch({
+		methodType: 'get',
+		responseType: 'json',
 		url: config.planbookURL[0] + month + "%2F" + day + "%2F" + year + config.planbookURL[1],
 		headers: {
-			"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/-78.0",
+			"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:96.0.3) Gecko/20100101 Firefox/-96.0.3",
 			"Accept": "application/json, text/javascript, */*; q=0.01",
 			"Accept-Language": "en-US,en;q=0.5",
 			"Authorization": "Bearer null",
@@ -87,10 +74,8 @@ async function createFeed() {
 			"Connection": "keep-alive",
 			"Referer": config.planbookURL[2],
 			"TE": "Trailers"
-		},
-		json: true
+		}
 	});
-	console.log(results);
 	let days = {
 		monday: {},
 		tuesday: {},
@@ -102,7 +87,7 @@ async function createFeed() {
 		console.error("[ERR] There are no results! Something went wrong!");
 		return process.exit();
 	}
-	for(let objects of results.days) {
+	for(let objects of results.data.days) {
 		// this filters our results into a simple object
 		switch(objects.dayOfWeek) {
 			case 'Monday':
@@ -120,35 +105,49 @@ async function createFeed() {
 			break;
 		}
 	}
-	// I want to eventually have it work with multiple things on the same day in the objects variable, but I am too lazy rn so I am only doing one
-	// Add it yourself using this line below in the content field
-	// + days.<day>.objects[<number>].lessonText
+	// WIP: One day, I will add a lessonText detector to see how many lessons there are. 
+	// Until then, add lessons yourself using this line below in the content variable
+	// + days[day].objects[<number>].lessonText
+	function checkEvent(day) {
+		let capitalDay = day.charAt(0).toUpperCase() + day.slice(1);
+		if(days[day].objects[0] === null || days[day].objects[0] === 0 || !days[day].objects[0]) {
+			return "<h1><strong>" + capitalDay + "</strong></h1><br>No lesson for this day.<br>No events or lesson detected.";
+		} else if(days[day].objects[0].eventTitle) {
+			return "<h1><strong>" + capitalDay + "</strong></h1><br>No lesson for this day.<br>" + days[day].objects[0].eventTitle;
+		} else {
+			let notes = (config.notes[day].length != 0) ? config.notes[day] : "None.";
+			let content = "<h1><strong>" + capitalDay + " - " + days[day].date + "</strong></h1><br><p><strong>Notes: </strong>" + notes  + "<br>" + days[day].objects[0].lessonText;
+			return content;
+		}
+	};
+
+
 	const daysFormatted = [
 		{
 			title: "Monday",
 			date: days.monday.date,
-			content: (!days.monday.objects[0].eventTitle) ? days.monday.objects[0].lessonText + "<br><br>" : "No Lesson for this day." + "<br>" + days.monday.objects[0].eventTitle
+			content: checkEvent("monday")
 
 		},
 	        {
 			title: "Tuesday",
 			date: days.tuesday.date,
-			content: (!days.tuesday.objects[0].eventTitle) ? days.tuesday.objects[0].lessonText + "<br><br>" : "No Lesson for this day." + "<br>" + days.tuesday.objects[0].eventTitle
+			content: checkEvent("tuesday")
 		},
 		{
 			title: "Wednesday",
 			date: days.wednesday.date,
-			content: (!days.wednesday.objects[0].eventTitle) ? days.wednesday.objects[0].lessonText + "<br><br>" : "No Lesson for this day.<br>" + days.wednesday.objects[0].eventTitle
+			content: checkEvent("wednesday")
 },
 		{
 			title: "Thursday",
 			date: days.thursday.date,
-			content: (!days.thursday.objects[0].eventTitle) ? days.thursday.objects[0].lessonText + "<br><br>" : "No Lesson for this day.<br>" + days.thursday.objects[0].eventTitle 
+			content: checkEvent("thursday")
 		},
 		{
 			title: "Friday",
 			date: days.friday.date,
-			content: (!days.friday.objects[0].eventTitle) ? days.friday.objects[0].lessonText + "<br><br>" : "No Lesson for this day.<br>" + days.friday.objects[0].eventTitle 
+			content: checkEvent("friday")
 		}
 	];
 	console.log("[INFO] Planbook data received! Creating RSS feed...");
@@ -157,7 +156,7 @@ async function createFeed() {
 	// feel free to change the author field as long as you still provide credit.
 	const rssFeed = new feed({
 		title: config.feed.title,
-		description: "A planbook scrapper for node.js. Made by Wolfie#7968 (wolf1e.ga).",
+		description: "A planbook scrapper for Node.JS. Made by Wolfie#7968 (wolf1e.ga).",
 		id: config.websiteURL,
 		link: config.websiteURL,
 		language: "en",
@@ -174,7 +173,7 @@ async function createFeed() {
 
 	const postContent = []; 
 	daysFormatted.forEach(post => {
-		postContent.push("<h1><strong>" + post.date + "</strong></h1><br><br>" + post.content + "<br><br>");
+		postContent.push(post.content + "<br><br>");
 		});
 	rssFeed.addItem({
 		title: "Planbook for Week of: " + todayDateISO,
