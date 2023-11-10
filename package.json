@@ -9,7 +9,7 @@
   "author": "wolfiediscord",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.25.0",
+    "axios": "^1.6.0",
     "feed": "^4.2.2"
   }
 }
